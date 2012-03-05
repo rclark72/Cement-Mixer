@@ -2,6 +2,8 @@
 
 Cement Mixer is a no frills management application for micro CI servers like [CIJoe](https://github.com/defunkt/cijoe) and [Integrity](http://integrityapp.com/)
 
+![cement-mixer](http://db.tt/781TN26P)
+
 ## Installation
 
     git clone git://github.com/lojack/Cement-Mixer.git
