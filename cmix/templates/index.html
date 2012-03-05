@@ -1,5 +1,9 @@
 {% if servers %}
-localhost
+    <ul>
+        {% for server in servers %}
+        <li><a href="{{ server.link }}">{{ server.name }}</a> - <a href="{{ server.trigger_url }}">Trigger</a></li>
+        {% endfor %}
+    </ul>
 {% else %}
 No build servers
 {% endif %}
