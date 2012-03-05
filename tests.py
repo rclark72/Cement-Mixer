@@ -45,6 +45,15 @@ class MixerTestCase(unittest.TestCase):
     def tearDown(self):
         views.connection.drop_database(app.config['MONGODB_NAME'])
 
+    def add_server(self, follow_redirects=False):
+        return self.app.post('/server', data=dict(
+                                link=self.config_link,
+                                name=self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
+                            ), follow_redirects=follow_redirects)
+
+
     def test_empty_db(self):
         rv = self.app.get('/')
         assert 'No build servers' in rv.data
@@ -56,12 +65,7 @@ class MixerTestCase(unittest.TestCase):
         assert '</form>' in rv.data
 
     def test_add_server(self):
-        req_add = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name=self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ), follow_redirects=True)
+        req_add = self.add_server(follow_redirects=True)
         self.assertEqual(req_add.status_code, 200)
         req_index = self.app.get('/')
         assert self.config_name in req_index.data
@@ -69,12 +73,7 @@ class MixerTestCase(unittest.TestCase):
         assert self.config_trigger in req_index.data
 
     def test_delete_server(self):
-        req_add = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name=self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ))
+        req_add = self.add_server()
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
 
@@ -88,16 +87,15 @@ class MixerTestCase(unittest.TestCase):
         assert self.config_name not in req_index2.data
 
     def test_update_server(self):
-        req_add = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name=self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ))
+        # add server and get path
+        req_add = self.add_server()
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
+        
+        # verify path exists
         req_change = self.app.get(path)
         self.assertEqual(req_change.status_code, 200)
+        
         req_update = self.app.put(path, data=dict(
                                 link=self.config_link,
                                 name='%s_test' % self.config_name,
@@ -105,53 +103,12 @@ class MixerTestCase(unittest.TestCase):
                                 status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_update.status_code, 200)
+        
         req_index = self.app.get('/')
         assert '%s_test' % self.config_name in req_index.data
 
-    def test_add_multiple_servers(self):
-        req_add = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name='%s1' % self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ), follow_redirects=True)
-        self.assertEqual(req_add.status_code, 200)
-        req_add2 = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name='%s2' % self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ), follow_redirects=True)
-        self.assertEqual(req_add2.status_code, 200)
-        req_index = self.app.get('/')
-        assert '%s1' % self.config_name in req_index.data
-        assert '%s2' % self.config_name in req_index.data
-
-    def test_duplicate_server(self):
-        req_add = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name='%s' % self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ), follow_redirects=True)
-        self.assertEqual(req_add.status_code, 200)
-        req_add2 = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name='%s' % self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ), follow_redirects=True)
-        self.assertEqual(req_add2.status_code, 200)
-        req_index = self.app.get('/')
-        assert self.config_name in req_index.data
-
     def test_trigger(self):
-        req_add = self.app.post('/server', data=dict(
-                                link=self.config_link,
-                                name=self.config_name,
-                                trigger_url=self.config_trigger,
-                                status_url=self.config_status
-                            ))
+        req_add = self.add_server()
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
 

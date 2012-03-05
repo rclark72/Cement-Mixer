@@ -46,7 +46,7 @@ def update_server(server_id):
                 })
     elif request.method == 'DELETE':
         server = conn().buildservers.remove({'_id': ObjectId(server_id)})
-        return redirect(url_for('index'))
+        return "Success"
 
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
 

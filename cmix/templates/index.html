@@ -19,7 +19,8 @@
                             <span class="icon-home"></span> Visit Server</a>
                         <button class="btn" onclick="triggerBuild('{{ server._id }}');">
                             <span class="icon-refresh"></span> Trigger Build</button>
-                        <button class="btn btn-danger" onclick="deleteServer('{{ server._id }}');">
+                        
+                        <button class="btn btn-danger action-delete" href="{{ url_for('update_server', server_id=server._id.__str__()) }}">
                             <span class="icon-trash"></span> Delete</button>
                     </div>
                 </div>
