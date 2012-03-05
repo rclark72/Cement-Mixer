@@ -96,7 +96,7 @@ class MixerTestCase(unittest.TestCase):
         req_change = self.app.get(path)
         self.assertEqual(req_change.status_code, 200)
         
-        req_update = self.app.put(path, data=dict(
+        req_update = self.app.post(path, data=dict(
                                 link=self.config_link,
                                 name='%s_test' % self.config_name,
                                 trigger_url=self.config_trigger,
@@ -106,6 +106,24 @@ class MixerTestCase(unittest.TestCase):
         
         req_index = self.app.get('/')
         assert '%s_test' % self.config_name in req_index.data
+
+    def test_ping(self):
+        req_add = self.add_server()
+        self.assertEqual(req_add.status_code, 302)
+        path = urlparse(req_add.location).path
+        
+        with mox_response(MockResponse("Not OK", 400)):
+            req_trigger = self.app.post('%s/ping' % path, data=dict())
+            self.assertEqual(req_trigger.status_code, 400)
+            req_status = self.app.get(path)
+            assert 'Failure' in req_status.data
+            
+        with mox_response(MockResponse("OK")):
+            req_trigger = self.app.post('%s/ping' % path, data=dict())
+            self.assertEqual(req_trigger.status_code, 200)
+            req_status = self.app.get(path)
+            assert 'Success' in req_status.data
+            
 
     def test_trigger(self):
         req_add = self.add_server()

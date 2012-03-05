@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
+<h2 href="{{ url_for('update_server', server_id=server._id.__str__()) }}" data-serverid="{{ server._id.__str__() }}"
+    class="server_link">
+    {{ server.name }}
+    {% if server.build_success %}
+        <span class="label label-success">Success</span>
+    {% else %}
+        <span class="label label-important">Failure</span>
+    {% endif %}
+</h2>
 <form method="POST">
     <p>
         <label for="form_name">Name</label>
