@@ -29,7 +29,7 @@ def add_server():
     server.save()
     return redirect(url_for('update_server', server_id=str(server['_id'])))
 
-@app.route('/server/<server_id>', methods=['PUT', 'GET'])
+@app.route('/server/<server_id>', methods=['PUT', 'GET', 'DELETE'])
 def update_server(server_id):
     if request.method == 'PUT':
         conn().buildservers.update({'_id': ObjectId(server_id)},
@@ -39,6 +39,10 @@ def update_server(server_id):
                     'trigger_url': request.form['trigger_url'],
                     'status_url': request.form['status_url']}
                 })
+    elif request.method == 'DELETE':
+        server = conn().buildservers.remove({'_id': ObjectId(server_id)})
+        return redirect(url_for('index'))
+
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
 
     return 'Update'

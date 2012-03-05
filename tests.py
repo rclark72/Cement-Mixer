@@ -1,6 +1,9 @@
 import unittest
 from cmix import app, views
 from urlparse import urlparse
+import mox
+import urllib2
+from contextlib import contextmanager
 
 class MockResponse(object):
     def __init__(self, resp_data, code=200, msg='OK'):
@@ -14,6 +17,15 @@ class MockResponse(object):
 
     def getcode(self):
         return self.code
+@contextmanager
+def mox_response(response):
+    m = mox.Mox()
+    m.StubOutWithMock(urllib2, 'urlopen')
+    urllib2.urlopen(mox.IgnoreArg()).AndReturn(response)
+    m.ReplayAll()
+    yield
+    m.UnsetStubs()
+    m.VerifyAll()
 
 class MixerTestCase(unittest.TestCase):
     config_name = 'localhost'
@@ -50,6 +62,25 @@ class MixerTestCase(unittest.TestCase):
         assert self.config_name in req_index.data
         assert self.config_link in req_index.data
         assert self.config_trigger in req_index.data
+
+    def test_delete_server(self):
+        req_add = self.app.post('/server', data=dict(
+                                link=self.config_link,
+                                name=self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
+                            ))
+        self.assertEqual(req_add.status_code, 302)
+        path = urlparse(req_add.location).path
+        
+        req_index = self.app.get('/')
+        assert self.config_name in req_index.data
+
+        req_delete = self.app.delete(path, follow_redirects=True)
+        self.assertEqual(req_delete.status_code, 200)
+        
+        req_index2 = self.app.get('/')
+        assert self.config_name not in req_index2.data
 
     def test_update_server(self):
         req_add = self.app.post('/server', data=dict(
@@ -120,20 +151,12 @@ class MixerTestCase(unittest.TestCase):
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
 
-        import mox
-        import urllib2
         m = mox.Mox()
         
         # Stub out a successful response
-        response = MockResponse("Build Started")
-        m.StubOutWithMock(urllib2, 'urlopen')
-        urllib2.urlopen(mox.IgnoreArg()).AndReturn(response)
-        m.ReplayAll()
-
-        req_trigger1 = self.app.post('%s/trigger' % path, data=dict())
-        self.assertEqual(req_trigger1.status_code, 200)
-        m.UnsetStubs()
-        m.VerifyAll()
+        with mox_response(MockResponse("Build Started")):
+            req_trigger = self.app.post('%s/trigger' % path, data=dict())
+            self.assertEqual(req_trigger.status_code, 200)
 
         # Stub out server unavailable response
         m.StubOutWithMock(urllib2, 'urlopen')
@@ -146,15 +169,9 @@ class MixerTestCase(unittest.TestCase):
         m.VerifyAll()
 
         # Stub out 400 error
-        response2 = MockResponse("Error", code=400)
-        m.StubOutWithMock(urllib2, 'urlopen')
-        urllib2.urlopen(mox.IgnoreArg()).AndReturn(response2)
-        m.ReplayAll()
-
-        req_trigger3 = self.app.post('%s/trigger' % path, data=dict())
-        self.assertEqual(req_trigger3.status_code, 503)
-        m.UnsetStubs()
-        m.VerifyAll()
+        with mox_response(MockResponse("Error", code=400)):
+            req_trigger = self.app.post('%s/trigger' % path, data=dict())
+            self.assertEqual(req_trigger.status_code, 503)
 
 
 if __name__ == '__main__':

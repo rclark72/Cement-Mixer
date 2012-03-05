@@ -1,7 +1,7 @@
 {% if servers %}
     <ul>
         {% for server in servers %}
-        <li><a href="{{ server.link }}">{{ server.name }}</a> - <a href="{{ server.trigger_url }}">Trigger</a></li>
+        <li class="{% if server.build_success %}success{% else %}failure{% endif %}"><a href="{{ server.link }}">{{ server.name }}</a> - <a href="{{ server.trigger_url }}">Trigger</a></li>
         {% endfor %}
     </ul>
 {% else %}

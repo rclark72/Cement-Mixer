@@ -15,7 +15,8 @@ class BuildServer(Document):
         'link': unicode,
         'name': unicode,
         'trigger_url': unicode,
-        'status_url': unicode
+        'status_url': unicode,
+        'build_success': bool
     }
     validators = {
         'name': max_length(50)
