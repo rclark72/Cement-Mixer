@@ -3,10 +3,10 @@ from cmix import app, views
 from urlparse import urlparse
 
 class MixerTestCase(unittest.TestCase):
-    test_name = 'localhost'
-    test_link = 'http://%s:4567' % test_name
-    test_trigger = '%s' % test_link
-    test_status = '%s/ping' % test_link
+    config_name = 'localhost'
+    config_link = 'http://%s:4567' % config_name
+    config_trigger = '%s' % config_link
+    config_status = '%s/ping' % config_link
     def setUp(self):
         app.config['TESTING'] = True
         app.config['MONGODB_NAME'] = app.config['MONGODB_NAME'] + '_test'
@@ -27,76 +27,88 @@ class MixerTestCase(unittest.TestCase):
 
     def test_add_server(self):
         req_add = self.app.post('/server', data=dict(
-                                link=self.test_link,
-                                name=self.test_name,
-                                trigger_url=self.test_trigger,
-                                status_url=self.test_status
+                                link=self.config_link,
+                                name=self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_add.status_code, 200)
         req_index = self.app.get('/')
-        assert self.test_name in req_index.data
-        assert self.test_link in req_index.data
-        assert self.test_trigger in req_index.data
+        assert self.config_name in req_index.data
+        assert self.config_link in req_index.data
+        assert self.config_trigger in req_index.data
 
     def test_update_server(self):
         req_add = self.app.post('/server', data=dict(
-                                link=self.test_link,
-                                name=self.test_name,
-                                trigger_url=self.test_trigger,
-                                status_url=self.test_status
+                                link=self.config_link,
+                                name=self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
                             ))
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
         req_change = self.app.get(path)
         self.assertEqual(req_change.status_code, 200)
         req_update = self.app.put(path, data=dict(
-                                link=self.test_link,
-                                name='%s_test' % self.test_name,
-                                trigger_url=self.test_trigger,
-                                status_url=self.test_status
+                                link=self.config_link,
+                                name='%s_test' % self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_update.status_code, 200)
         req_index = self.app.get('/')
-        assert '%s_test' % self.test_name in req_index.data
+        assert '%s_test' % self.config_name in req_index.data
 
     def test_add_multiple_servers(self):
         req_add = self.app.post('/server', data=dict(
-                                link=self.test_link,
-                                name='%s1' % self.test_name,
-                                trigger_url=self.test_trigger,
-                                status_url=self.test_status
+                                link=self.config_link,
+                                name='%s1' % self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_add.status_code, 200)
         req_add2 = self.app.post('/server', data=dict(
-                                link=self.test_link,
-                                name='%s2' % self.test_name,
-                                trigger_url=self.test_trigger,
-                                status_url=self.test_status
+                                link=self.config_link,
+                                name='%s2' % self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_add2.status_code, 200)
         req_index = self.app.get('/')
-        assert '%s1' % self.test_name in req_index.data
-        assert '%s2' % self.test_name in req_index.data
+        assert '%s1' % self.config_name in req_index.data
+        assert '%s2' % self.config_name in req_index.data
 
 
     def test_duplicate_server(self):
         req_add = self.app.post('/server', data=dict(
-                                link=self.test_link,
-                                name='%s' % self.test_name,
-                                trigger_url=self.test_trigger,
-                                status_url=self.test_status
+                                link=self.config_link,
+                                name='%s' % self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_add.status_code, 200)
         req_add2 = self.app.post('/server', data=dict(
-                                link=self.test_link,
-                                name='%s' % self.test_name,
-                                trigger_url=self.test_trigger,
-                                status_url=self.test_status
+                                link=self.config_link,
+                                name='%s' % self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_add2.status_code, 200)
         req_index = self.app.get('/')
-        assert self.test_name in req_index.data
+        assert self.config_name in req_index.data
 
+    def test_trigger(self):
+        req_add = self.app.post('/server', data=dict(
+                                link=self.config_link,
+                                name=self.config_name,
+                                trigger_url=self.config_trigger,
+                                status_url=self.config_status
+                            ))
+        self.assertEqual(req_add.status_code, 302)
+        path = urlparse(req_add.location).path
+
+        req_trigger = self.app.post('%s/trigger' % path, data=dict())
+        self.assertEqual(req_trigger.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()

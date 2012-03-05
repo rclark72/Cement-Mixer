@@ -42,3 +42,7 @@ def update_server(server_id):
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
 
     return 'Update'
+
+@app.route('/server/<server_id>/trigger', methods=['POST'])
+def trigger_build(server_id):
+    return 'Stub'
