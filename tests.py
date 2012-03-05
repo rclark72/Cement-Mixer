@@ -2,6 +2,19 @@ import unittest
 from cmix import app, views
 from urlparse import urlparse
 
+class MockResponse(object):
+    def __init__(self, resp_data, code=200, msg='OK'):
+        self.resp_data = resp_data
+        self.code = code
+        self.msg = msg
+        self.headers = {'content-type': 'text/xml; charset=utf-8'}
+
+    def read(self):
+        return self.resp_data
+
+    def getcode(self):
+        return self.code
+
 class MixerTestCase(unittest.TestCase):
     config_name = 'localhost'
     config_link = 'http://%s:4567' % config_name
@@ -107,8 +120,42 @@ class MixerTestCase(unittest.TestCase):
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
 
-        req_trigger = self.app.post('%s/trigger' % path, data=dict())
-        self.assertEqual(req_trigger.status_code, 200)
+        import mox
+        import urllib2
+        m = mox.Mox()
+        
+        # Stub out a successful response
+        response = MockResponse("Build Started")
+        m.StubOutWithMock(urllib2, 'urlopen')
+        urllib2.urlopen(mox.IgnoreArg()).AndReturn(response)
+        m.ReplayAll()
+
+        req_trigger1 = self.app.post('%s/trigger' % path, data=dict())
+        self.assertEqual(req_trigger1.status_code, 200)
+        m.UnsetStubs()
+        m.VerifyAll()
+
+        # Stub out server unavailable response
+        m.StubOutWithMock(urllib2, 'urlopen')
+        urllib2.urlopen(mox.IgnoreArg()).AndRaise(urllib2.URLError("Unavailable"))
+        m.ReplayAll()
+
+        req_trigger2 = self.app.post('%s/trigger' % path, data=dict())
+        self.assertEqual(req_trigger2.status_code, 503)
+        m.UnsetStubs()
+        m.VerifyAll()
+
+        # Stub out 400 error
+        response2 = MockResponse("Error", code=400)
+        m.StubOutWithMock(urllib2, 'urlopen')
+        urllib2.urlopen(mox.IgnoreArg()).AndReturn(response2)
+        m.ReplayAll()
+
+        req_trigger3 = self.app.post('%s/trigger' % path, data=dict())
+        self.assertEqual(req_trigger3.status_code, 503)
+        m.UnsetStubs()
+        m.VerifyAll()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -45,4 +45,15 @@ def update_server(server_id):
 
 @app.route('/server/<server_id>/trigger', methods=['POST'])
 def trigger_build(server_id):
-    return 'Stub'
+    import urllib2
+    server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
+    req = urllib2.Request(server['trigger_url'], dict())
+    try:
+        response = urllib2.urlopen(req)
+    except urllib2.URLError:
+        return abort(503)
+    
+    if response.code != 200:
+        return abort(503)
+
+    return 'Build Triggered'
