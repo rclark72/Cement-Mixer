@@ -17,8 +17,10 @@ def index():
     servers = list(conn().buildservers.find())
     return render_template('index.html', servers=servers)
 
-@app.route('/server', methods=['POST'])
+@app.route('/server', methods=['POST', 'GET'])
 def add_server():
+    if request.method == 'GET':
+        return render_template('new_server.html')
     server = conn().buildservers.BuildServer()
     server['link'] = request.form['link']
     server['name'] = request.form['name']

@@ -20,6 +20,11 @@ class MixerTestCase(unittest.TestCase):
         assert 'No build servers' in rv.data
         self.assertEqual(rv.status_code, 200)
 
+    def test_new_server(self):
+        rv = self.app.get('/server')
+        self.assertEqual(rv.status_code, 200)
+        assert '</form>' in rv.data
+
     def test_add_server(self):
         req_add = self.app.post('/server', data=dict(
                                 link=self.test_link,
