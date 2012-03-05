@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="POST">
+    <p>
+        <label for="form_name">Name</label>
+        <input type="text" id="form_name" name="name" value="{{ server.name }}" />
+    </p>
+    <p>
+        <label for="form_link">Link</label>
+        <input type="text" id="form_link" name="link" value="{{ server.link }}" />
+    </p>
+    <p>
+        <label for="form_trigger">Trigger URL</label>
+        <input type="text" id="form_trigger" name="trigger_url" value="{{ server.trigger_url }}" />
+    </p>
+    <p>
+        <label for="form_status">Status URL</label>
+        <input type="text" id="form_status" name="status_url" value="{{ server.status_url }}" />
+    </p>
+    <p>
+        <input type="submit" value="Submit" />
+    </p>
+</form>
+{% endblock %}

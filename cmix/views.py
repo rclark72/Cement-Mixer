@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort, redirect, url_for
+from flask import Flask, render_template, request, abort, redirect, url_for, flash
 import models
 from mongokit import Connection
 from pymongo.objectid import ObjectId
@@ -34,9 +34,9 @@ def add_server():
     return redirect(url_for('update_server', server_id=str(server['_id'])))
 
 
-@app.route('/server/<server_id>', methods=['PUT', 'GET', 'DELETE'])
+@app.route('/server/<server_id>', methods=['POST', 'GET', 'DELETE'])
 def update_server(server_id):
-    if request.method == 'PUT':
+    if request.method == 'POST':
         conn().buildservers.update({'_id': ObjectId(server_id)},
                 {'$set': {
                     'link': request.form['link'],
@@ -44,11 +44,15 @@ def update_server(server_id):
                     'trigger_url': request.form['trigger_url'],
                     'status_url': request.form['status_url']}
                 })
+        flash("Server has sucessfully been updated", 'success')
+        server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
+        return redirect(url_for('update_server', server_id=str(server['_id'])))
     elif request.method == 'DELETE':
         server = conn().buildservers.remove({'_id': ObjectId(server_id)})
         return "Success"
 
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
+    return render_template('update.html', server=server)
 
     return 'Update'
 
