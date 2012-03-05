@@ -1,7 +1,9 @@
 from mongokit import Connection, Document
 
+
 def register_connection(connection):
     connection.register([BuildServer])
+
 
 def max_length(length):
     def validate(value):
@@ -9,6 +11,7 @@ def max_length(length):
             return True
         raise Exception('%s must be at most %s characters long' % length)
     return validate
+
 
 class BuildServer(Document):
     structure = {
@@ -22,6 +25,6 @@ class BuildServer(Document):
         'name': max_length(50)
     }
     use_dot_notation = True
+
     def __repr__(self):
         return '<BuildServer %r>' % (self.name)
-

@@ -5,6 +5,7 @@ import mox
 import urllib2
 from contextlib import contextmanager
 
+
 class MockResponse(object):
     def __init__(self, resp_data, code=200, msg='OK'):
         self.resp_data = resp_data
@@ -17,6 +18,8 @@ class MockResponse(object):
 
     def getcode(self):
         return self.code
+
+
 @contextmanager
 def mox_response(response):
     m = mox.Mox()
@@ -27,11 +30,13 @@ def mox_response(response):
     m.UnsetStubs()
     m.VerifyAll()
 
+
 class MixerTestCase(unittest.TestCase):
     config_name = 'localhost'
     config_link = 'http://%s:4567' % config_name
     config_trigger = '%s' % config_link
     config_status = '%s/ping' % config_link
+
     def setUp(self):
         app.config['TESTING'] = True
         app.config['MONGODB_NAME'] = app.config['MONGODB_NAME'] + '_test'
@@ -72,13 +77,13 @@ class MixerTestCase(unittest.TestCase):
                             ))
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
-        
+
         req_index = self.app.get('/')
         assert self.config_name in req_index.data
 
         req_delete = self.app.delete(path, follow_redirects=True)
         self.assertEqual(req_delete.status_code, 200)
-        
+
         req_index2 = self.app.get('/')
         assert self.config_name not in req_index2.data
 
@@ -122,7 +127,6 @@ class MixerTestCase(unittest.TestCase):
         assert '%s1' % self.config_name in req_index.data
         assert '%s2' % self.config_name in req_index.data
 
-
     def test_duplicate_server(self):
         req_add = self.app.post('/server', data=dict(
                                 link=self.config_link,
@@ -152,7 +156,7 @@ class MixerTestCase(unittest.TestCase):
         path = urlparse(req_add.location).path
 
         m = mox.Mox()
-        
+
         # Stub out a successful response
         with mox_response(MockResponse("Build Started")):
             req_trigger = self.app.post('%s/trigger' % path, data=dict())
@@ -160,7 +164,9 @@ class MixerTestCase(unittest.TestCase):
 
         # Stub out server unavailable response
         m.StubOutWithMock(urllib2, 'urlopen')
-        urllib2.urlopen(mox.IgnoreArg()).AndRaise(urllib2.URLError("Unavailable"))
+        urllib2.urlopen(
+                mox.IgnoreArg()).AndRaise(urllib2.URLError("Unavailable")
+            )
         m.ReplayAll()
 
         req_trigger2 = self.app.post('%s/trigger' % path, data=dict())

@@ -1,21 +1,25 @@
 from flask import Flask, render_template, request, abort, redirect, url_for
 import models
-from mongokit import Connection 
+from mongokit import Connection
 from pymongo.objectid import ObjectId
 app = Flask(__name__)
 app.config.from_object('cmix.settings')
 
 connection = Connection(app.config['MONGODB_HOST'],
                         int(app.config['MONGODB_PORT']))
+
+
 def conn():
     return connection[app.config['MONGODB_NAME']]
 
 models.register_connection(connection)
 
+
 @app.route('/')
 def index():
     servers = list(conn().buildservers.find())
     return render_template('index.html', servers=servers)
+
 
 @app.route('/server', methods=['POST', 'GET'])
 def add_server():
@@ -28,6 +32,7 @@ def add_server():
     server['status_url'] = request.form['status_url']
     server.save()
     return redirect(url_for('update_server', server_id=str(server['_id'])))
+
 
 @app.route('/server/<server_id>', methods=['PUT', 'GET', 'DELETE'])
 def update_server(server_id):
@@ -47,6 +52,7 @@ def update_server(server_id):
 
     return 'Update'
 
+
 @app.route('/server/<server_id>/trigger', methods=['POST'])
 def trigger_build(server_id):
     import urllib2
@@ -56,7 +62,7 @@ def trigger_build(server_id):
         response = urllib2.urlopen(req)
     except urllib2.URLError:
         return abort(503)
-    
+
     if response.code != 200:
         return abort(503)
 

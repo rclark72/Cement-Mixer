@@ -3,7 +3,10 @@ from models import MixerConnection
 app = Flask(__name__)
 app.config.from_object('settings')
 
-connection = MixerConnection(app.config['MONGODB_HOST'], app.config['MONGODB_PORT'], 'cmix')
+connection = MixerConnection(
+                app.config['MONGODB_HOST'],
+                app.config['MONGODB_PORT'],
+                'cmix')
 
 
 @app.route('/')
