@@ -1,9 +1,32 @@
-{% if servers %}
-    <ul>
+{% extends "base.html" %}
+{% block content %}
+    {% if servers %}
         {% for server in servers %}
-        <li class="{% if server.build_success %}success{% else %}failure{% endif %}"><a href="{{ server.link }}">{{ server.name }}</a> - <a href="{{ server.trigger_url }}">Trigger</a></li>
+            <div class="row">
+                <div class="span1">
+                    {% if server.build_success %}
+                        <span class="label label-success">Success</span>
+                    {% else %}
+                        <span class="label label-important">Failure</span>
+                    {% endif %}
+                </div>
+                <div class="span7">
+                    <a href="{{ server.link }}">{{server.name }}</a>
+                </div>
+                <div class="span4">
+                    <div class="btn-group">
+                        <a class="btn" href="{{ server.link }}">
+                            <span class="icon-home"></span> Visit Server</a>
+                        <button class="btn" onclick="triggerBuild('{{ server._id }}');">
+                            <span class="icon-refresh"></span> Trigger Build</button>
+                        <button class="btn btn-danger" onclick="deleteServer('{{ server._id }}');">
+                            <span class="icon-trash"></span> Delete</button>
+                    </div>
+                </div>
+            </div>
+            <div class="row"><br/></div>
         {% endfor %}
-    </ul>
 {% else %}
 No build servers
 {% endif %}
+{% endblock %}
