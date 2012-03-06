@@ -113,7 +113,7 @@ class MixerTestCase(unittest.TestCase):
         path = urlparse(req_add.location).path
         
         with mox_response(MockResponse("Not OK", 400)):
-            from runner import update_builds
+            from cmix.runner import update_builds
             update_builds()
 
             req_trigger = self.app.post('%s/ping' % path, data=dict())
@@ -122,7 +122,7 @@ class MixerTestCase(unittest.TestCase):
             assert 'Failure' in req_status.data
             
         with mox_response(MockResponse("OK")):
-            from runner import update_builds
+            from cmix.runner import update_builds
             update_builds()
 
             req_trigger = self.app.post('%s/ping' % path, data=dict())
