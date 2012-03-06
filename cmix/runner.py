@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(filename='scheduler.log',level=logging.DEBUG)
 
 sched = Scheduler()
-@sched.interval_schedule(seconds=2)
+@sched.interval_schedule(seconds=10)
 def update_builds():
     servers = list(conn().buildservers.find())
     for server in servers:
