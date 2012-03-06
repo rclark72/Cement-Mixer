@@ -1,3 +1,10 @@
+{% macro nav_link(endpoint, name) %}
+    {%- if url_for(endpoint) == request.script_root + request.path -%} 
+        <li class="active"><a href="{{ url_for(endpoint) }}">{{ name }}</a></li>
+    {%- else -%} 
+        <li><a href="{{ url_for(endpoint) }}">{{ name }}</a></li>
+    {%- endif -%} 
+{% endmacro %} 
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -41,20 +48,20 @@
           </a>
           <a class="brand" href="/">Cement Mixer</a>
           <div class="nav-collapse">
-            <ul class="nav">
-              <li class="active"><a href="{{ url_for('index') }}">Servers</a></li>
-              <li><a href="{{ url_for('add_server') }}">Add Server</a></li>
-            </ul>
-            <ul class="nav pull-right">
-                <li>
-                <div class="btn-group" data-toggle="buttons-radio" id="monitoring">
-                    <button class="btn btn-success{% if session['monitoring_active'] == true %} active{% endif
-                        %}">Monitoring Active</button>
-                    <button class="btn btn-danger{% if session['monitoring_active'] == false %} active{% endif
-                        %}">Monitoring Inactive</button>
-                </div>
-              </li>
-            </ul>
+                <ul class="nav">
+                    {{ nav_link('index', 'Servers') }}
+                    {{ nav_link('add_server', 'Add Server') }}
+                </ul>
+                <ul class="nav pull-right">
+                    <li>
+                        <div class="btn-group" data-toggle="buttons-radio" id="monitoring">
+                            <button class="btn btn-success{% if session['monitoring_active'] == true %} active{% endif
+                                %}">Monitoring Active</button>
+                            <button class="btn btn-danger{% if session['monitoring_active'] == false %} active{% endif
+                                %}">Monitoring Inactive</button>
+                        </div>
+                    </li>
+                </ul>
           </div><!--/.nav-collapse -->
         </div>
       </div>

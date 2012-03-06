@@ -61,21 +61,11 @@ def update_server(server_id):
 def ping_build(server_id):
     import urllib2
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
-    req = urllib2.Request(server['status_url'])
-    try:
-        response = urllib2.urlopen(req)
-    except urllib2.URLError:
-        return abort(503)
-    
-    if(response.code == 200):
-        conn().buildservers.update({'_id': ObjectId(server_id)},
-                {'$set': {
-                    'build_success': True,
-                    'last_run': datetime.now()}
-                })
-        return "OK"
 
-    return abort(response.code)
+    if server['build_success']:
+        return "OK"
+    else:
+        return abort(400)
 
 @app.route('/monitoring', methods=['POST'])
 def set_monitoring():
@@ -101,3 +91,4 @@ def trigger_build(server_id):
 
     flash("Build successfully triggered", 'success')
     return 'Build Triggered'
+

@@ -11,6 +11,7 @@
                     {% else %}
                         <span class="label label-important status-{{ server._id.__str__() }}">Failure</span>
                     {% endif %}
+                    <!-- last_update: {{ server.last_run }} -->
                 </div>
                 <div class="span7">
                     <a href="{{ url_for('update_server', server_id=server._id.__str__()) }}" class="server_link"

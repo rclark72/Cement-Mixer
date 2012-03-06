@@ -9,3 +9,4 @@ pymongo==2.1.1
 simplejson==2.3.3
 virtualenv==1.6.4
 virtualenvwrapper==2.10.1
+APScheduler==2.0.2
