@@ -74,17 +74,6 @@ def update_server(server_id):
                             graph=graph(server_id))
 
 
-@app.route('/server/<server_id>/ping', methods=['POST', 'GET'])
-def ping_build(server_id):
-    import urllib2
-    server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
-
-    if server['build_success']:
-        return dump_server(server)
-    else:
-        return abort(400, dump_server(server))
-
-
 @app.route('/monitoring', methods=['POST'])
 def set_monitoring():
     active = request.form['active']
@@ -137,15 +126,3 @@ def graph(server_id):
     for itm in result:
         result_list.append(itm)
     return json.dumps(result_list, cls=MongoEncoder)
-
-
-def dump_server(server):
-    server_dump = {}
-    for k, v in server.iteritems():
-        if type(v) is datetime:
-            server_dump[k] = v.isoformat()
-        elif type(v) is ObjectId:
-            server_dump[k] = str(v)
-        else:
-            server_dump[k] = v
-    return json.dumps(server_dump)

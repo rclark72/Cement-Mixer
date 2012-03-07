@@ -4,7 +4,7 @@ from urlparse import urlparse
 import mox
 import urllib2
 from contextlib import contextmanager
-
+import json
 
 class MockResponse(object):
     def __init__(self, resp_data, code=200, msg='OK'):
@@ -100,27 +100,32 @@ class MixerTestCase(unittest.TestCase):
         req_index = self.app.get('/')
         assert '%s_test' % self.config_name in req_index.data
 
-    def test_ping(self):
+    def test_failed_build(self):
         req_add = self.add_server()
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
 
         from cmix.runner import update_builds
+        with mox_response(MockResponse("OK", 200)):
+            update_builds()
+
+        req_json = self.app.get('/json')
+        server_data = json.loads(req_json.data)
+        assert server_data[0]['build_success'] == True
+
         with mox_response(MockResponse("Not OK", 400)):
             update_builds()
 
-        req_trigger = self.app.post('%s/ping' % path, data=dict())
-        self.assertEqual(req_trigger.status_code, 400)
-        req_status = self.app.get(path)
-        assert 'Failure' in req_status.data
+        req_json = self.app.get('/json')
+        server_data = json.loads(req_json.data)
+        assert server_data[0]['build_success'] == False
 
         with mox_response(MockResponse("OK", 200)):
             update_builds()
 
-        req_ping = self.app.post('%s/ping' % path, data=dict())
-        self.assertEqual(req_ping.status_code, 200)
-        req_status = self.app.get(path)
-        assert 'Success' in req_status.data
+        req_json = self.app.get('/json')
+        server_data = json.loads(req_json.data)
+        assert server_data[0]['build_success'] == True
 
         m = mox.Mox()
 
@@ -133,22 +138,41 @@ class MixerTestCase(unittest.TestCase):
 
         update_builds()
 
-        req_ping = self.app.post('%s/ping' % path, data=dict())
-        self.assertEqual(req_trigger.status_code, 400)
+        req_json = self.app.get('/json')
+        server_data = json.loads(req_json.data)
+        assert server_data[0]['build_success'] == False
 
-    def test_ping_reverse(self):
+    def test_failed_first(self):
         req_add = self.add_server()
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
 
         from cmix.runner import update_builds
-        with mox_response(MockResponse("OK", 200)):
+        with mox_response(MockResponse("Not OK", 400)):
             update_builds()
 
-        req_ping = self.app.post('%s/ping' % path, data=dict())
-        self.assertEqual(req_ping.status_code, 200)
-        req_status = self.app.get(path)
-        assert 'Success' in req_status.data
+        req_json = self.app.get('/json')
+        server_data = json.loads(req_json.data)
+        assert server_data[0]['build_success'] == False
+
+    def test_graph(self):
+        req_add = self.add_server()
+        self.assertEqual(req_add.status_code, 302)
+        path = urlparse(req_add.location).path
+
+        req_json = self.app.get('%s/graph' % path)
+        self.assertEqual(req_json.status_code, 200)
+        
+        from cmix.runner import update_builds
+        with mox_response(MockResponse("Not OK", 400)):
+            update_builds()
+        req_json = self.app.get('%s/graph' % path)
+        self.assertEqual(req_json.status_code, 200)
+
+        with mox_response(MockResponse("OK", 200)):
+            update_builds()
+        req_json = self.app.get('%s/graph' % path)
+        self.assertEqual(req_json.status_code, 200)
 
     def test_monitoring(self):
         from flask import session
@@ -185,6 +209,14 @@ class MixerTestCase(unittest.TestCase):
         with mox_response(MockResponse("Error", code=400)):
             req_trigger = self.app.post('%s/trigger' % path, data=dict())
             self.assertEqual(req_trigger.status_code, 503)
+
+    def test_json(self):
+        req_json1 = self.app.get('/json')
+        self.assertEqual(req_json1.status_code, 200)
+        req_add = self.add_server(follow_redirects=True)
+        req_json2 = self.app.get('/json')
+        self.assertEqual(req_json2.status_code, 200)
+
 
 
 if __name__ == '__main__':
