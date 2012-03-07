@@ -34,7 +34,7 @@ def update_builds():
             conn().buildservers.update({'_id': server['_id']},
                     {'$set': {
                         'build_success': True,
-                        'last_run': datetime.now(),
+                        'last_run': datetime.now().isoformat(),
                         'changes': changes,
                         }
                     })
@@ -47,7 +47,7 @@ def update_builds():
             conn().buildservers.update({'_id': server['_id']},
                     {'$set': {
                         'build_success': False,
-                        'last_run': datetime.now(),
+                        'last_run': datetime.now().isoformat(),
                         'changes': changes,
                         }
                     })

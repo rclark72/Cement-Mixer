@@ -34,6 +34,15 @@
     <link rel="apple-touch-icon" sizes="72x72" href="{{ url_for('static', filename='images/apple-touch-icon-72x72.png') }}">
     <link rel="apple-touch-icon" sizes="114x114" href="{{ url_for('static',
     filename='images/apple-touch-icon-114x114.png') }}">
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/underscore.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/backbone.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load("visualization", "1", {packages:["corechart"]});
+    </script>
     {% block head %}{% endblock %}
   </head>
 
@@ -76,17 +85,75 @@
                     {{ message }}
                 </div>
             {% endfor %}
-        {% endwith %}
+            {% endwith %}
         {% block content %}{% endblock %}
     </div> <!-- /container -->
 
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    
 
+    <script type="text/template" id="serverdetail_template">
+        <div class="span4">
+            <h2 href="<%= entity_url %>" class="server_link">
+                <%= name %>
+                <% if (build_success) { %>
+                    <span class="label label-success">Success</span>
+                <% } else { %>
+                    <span class="label label-important">Failure</span>
+                <% } %>
+            </h2>
+            <p><strong>Updated:</strong> <span><%= last_run %></span></p>
+
+            <form method="POST">
+                <p>
+                    <label for="form_name">Name</label>
+                    <input type="text" id="form_name" name="name" value="<%= name %>" />
+                </p>
+                <p>
+                    <label for="form_link">Link</label>
+                    <input type="text" id="form_link" name="link" value="<%= link %>" />
+                </p>
+                <p>
+                    <label for="form_trigger">Trigger URL</label>
+                    <input type="text" id="form_trigger" name="trigger_url" value="<%= trigger_url %>" />
+                </p>
+                <p>
+                    <label for="form_status">Status URL</label>
+                    <input type="text" id="form_status" name="status_url" value="<%= status_url %>" />
+                </p>
+                <p>
+                    <input type="submit" value="Submit" class="btn" />
+                </p>
+            </form>
+        </div>
+    </script>
+
+    <script type="text/template" id="serverlist_template">
+        <div class="row">
+            <div class="span1">
+                <% if (build_success) { %>
+                    <span class="label label-success">Success</span>
+                <% } else { %>
+                    <span class="label label-important">Failure</span>
+                <% } %>
+
+            </div>
+            <div class="span7">
+                <a class="server_link" href="<%= entity_url %>"><%= name %></a>
+                <p class="pull-right"><strong>Updated:</strong> <span class="server_timestamp"><%= last_run %></span></p>
+            </div>
+            <div class="span4">
+                <div class="btn-group pull-right">
+                    <a href="<%= link %>" class="btn"><span class="icon-home"></span> Visit Server</a>
+                    <button href="<%= entity_url %>/trigger" class="btn action-trigger"><span class="icon-refresh"></span> Trigger Build</button>
+                    <button href="<%= entity_url %>" class="btn btn-danger action-delete"><span class="icon-trash"></span> Delete</button>
+                </div>
+            </div>
+        </div>
+        <div class="row"><br/></div>
+    </script>
   </body>
 </html>
 

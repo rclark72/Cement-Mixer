@@ -1,40 +1,12 @@
 {% extends "base.html" %}
+{% block head %}
+    <script>
+        $(function() {
+            var index_view = new IndexView();
+            ServerList.reset({{ servers_json|safe }});
+        });
+    </script>
+{% endblock %}
 {% block content %}
-<div class="row"><br/></div>
-    {% if servers %}
-    {% for server in servers %}
-
-            <div class="row">
-                <div class="span1">
-                    {% if server.build_success %}
-                        <span class="label label-success status-{{ server._id.__str__() }}">Success</span>
-                    {% else %}
-                        <span class="label label-important status-{{ server._id.__str__() }}">Failure</span>
-                    {% endif %}
-                </div>
-                <div class="span7">
-                    <a href="{{ url_for('update_server', server_id=server._id.__str__()) }}" class="server_link"
-                        data-serverid="{{ server._id.__str__() }}">{{server.name }}</a>
-                    {% if server.last_run %}
-                    <p class="pull-right"><strong>Updated:</strong> <span data-timestampid="{{ server._id.__str__() }}">{{ server.last_run
-                        }}</span></p>
-                    {% endif %}
-                </div>
-                <div class="span4">
-                    <div class="btn-group pull-right">
-                        <a class="btn" href="{{ server.link }}">
-                            <span class="icon-home"></span> Visit Server</a>
-                        <button class="btn action-trigger" href="{{ url_for('trigger_build', server_id=server._id.__str__()) }}">
-                            <span class="icon-refresh"></span> Trigger Build</button>
-                        
-                        <button class="btn btn-danger action-delete" href="{{ url_for('update_server', server_id=server._id.__str__()) }}">
-                            <span class="icon-trash"></span> Delete</button>
-                    </div>
-                </div>
-            </div>
-            <div class="row"><br/></div>
-        {% endfor %}
-{% else %}
-No build servers
-{% endif %}
+<div id="index_content"></div>
 {% endblock %}

@@ -2,8 +2,11 @@ from flask import Flask, render_template, request
 from flask import abort, redirect, url_for, flash, session
 import models
 from mongokit import Connection
+from pymongo import json_util
 from pymongo.objectid import ObjectId
 from datetime import datetime
+import json
+from json_encoder import MongoEncoder
 app = Flask(__name__)
 app.config.from_object('cmix.settings')
 
@@ -20,8 +23,16 @@ models.register_connection(connection)
 @app.route('/')
 def index():
     servers = list(conn().buildservers.find())
-    return render_template('index.html', servers=servers)
+    servers_json = json.dumps(servers, cls=MongoEncoder)
+    servers = []
+    return render_template('index.html', servers=servers, servers_json=servers_json)
 
+@app.route('/json')
+def index_json():
+    servers = list(conn().buildservers.find())
+    servers_json = json.dumps(servers, cls=MongoEncoder)
+    return servers_json
+    
 
 @app.route('/server', methods=['POST', 'GET'])
 def add_server():
@@ -33,7 +44,9 @@ def add_server():
     server['trigger_url'] = request.form['trigger_url']
     server['status_url'] = request.form['status_url']
     server.save()
-    return redirect(url_for('update_server', server_id=str(server['_id'])))
+    update_url = url_for('update_server', server_id=str(server['_id']))
+    server.update({'entity_url': update_url})
+    return redirect(update_url)
 
 
 @app.route('/server/<server_id>', methods=['POST', 'GET', 'DELETE'])
@@ -44,7 +57,8 @@ def update_server(server_id):
                     'link': request.form['link'],
                     'name': request.form['name'],
                     'trigger_url': request.form['trigger_url'],
-                    'status_url': request.form['status_url']}
+                    'status_url': request.form['status_url'],
+                    'entity_url': request.path}
                 })
         flash("Server has sucessfully been updated", 'success')
         server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
@@ -56,6 +70,7 @@ def update_server(server_id):
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
     return render_template('update.html',
                             server=server,
+                            server_id=server_id,
                             graph=graph(server_id))
 
 
@@ -97,6 +112,7 @@ def trigger_build(server_id):
     return 'Build Triggered'
 
 
+@app.route('/server/<server_id>/graph', methods=['GET'])
 def graph(server_id):
     from bson.code import Code
     map = Code("function() {" +
@@ -116,12 +132,14 @@ def graph(server_id):
                   "    });" +
                   "    return successSum/(successSum + failureSum);" +
                   "};")
-    result = conn().buildservers.map_reduce(map, reduce, "myresults")
-    return result.find()
+    result = conn().buildservers.map_reduce(map, reduce, "myresults").find()
+    result_list = []
+    for itm in result:
+        result_list.append(itm)
+    return json.dumps(result_list, cls=MongoEncoder)
 
 
 def dump_server(server):
-    import json
     server_dump = {}
     for k, v in server.iteritems():
         if type(v) is datetime:
