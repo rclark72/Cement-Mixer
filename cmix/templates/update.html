@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 {% block head %}
     <script>
-        window.server_id = "{{ server_id }}";
         $(function() {
+            ServerList.reset({{ servers_json|safe }});
             var detail_view = new ServerDetailView({
                 el: $('#content'),
-                server_id: "{{ server_id }}"
             });
             var uptime_view = new UptimeGraphView();
-            UptimeList.reset({{ graph|safe }});
         });
     </script>
 {% endblock %}

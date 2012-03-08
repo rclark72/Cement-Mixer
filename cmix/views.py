@@ -22,10 +22,8 @@ models.register_connection(connection)
 
 @app.route('/')
 def index():
-    servers = list(conn().buildservers.find())
-    servers_json = json.dumps(servers, cls=MongoEncoder)
-    servers = []
-    return render_template('index.html', servers=servers, servers_json=servers_json)
+    return render_template('index.html', servers_json=index_json())
+
 
 @app.route('/json')
 def index_json():
@@ -71,7 +69,7 @@ def update_server(server_id):
     return render_template('update.html',
                             server=server,
                             server_id=server_id,
-                            graph=graph(server_id))
+                            servers_json=index_json(),)
 
 
 @app.route('/monitoring', methods=['POST'])
@@ -99,30 +97,3 @@ def trigger_build(server_id):
 
     flash("Build successfully triggered", 'success')
     return 'Build Triggered'
-
-
-@app.route('/server/<server_id>/graph', methods=['GET'])
-def graph(server_id):
-    from bson.code import Code
-    map = Code("function() {" +
-               "    var current_time=-1;" +
-               "    if(this._id != '" + server_id + "') return;" +
-               "    for (var key in this.changes) {" +
-               "        emit(key, {successCount: this.changes[key][0]});" +
-               "        emit(key, {failureCount: this.changes[key][1]});" +
-               "    };" +
-               "}")
-    reduce = Code("function(key, values) {" +
-                  "    var successSum = 0;" +
-                  "    var failureSum = 0;" +
-                  "    values.forEach(function(f) {" +
-                  "        if (f.successCount) successSum += f.successCount;" +
-                  "        if (f.failureCount) failureSum += f.failureCount;" +
-                  "    });" +
-                  "    return successSum/(successSum + failureSum);" +
-                  "};")
-    result = conn().buildservers.map_reduce(map, reduce, "myresults").find()
-    result_list = []
-    for itm in result:
-        result_list.append(itm)
-    return json.dumps(result_list, cls=MongoEncoder)

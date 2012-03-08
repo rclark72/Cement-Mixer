@@ -155,25 +155,6 @@ class MixerTestCase(unittest.TestCase):
         server_data = json.loads(req_json.data)
         assert server_data[0]['build_success'] == False
 
-    def test_graph(self):
-        req_add = self.add_server()
-        self.assertEqual(req_add.status_code, 302)
-        path = urlparse(req_add.location).path
-
-        req_json = self.app.get('%s/graph' % path)
-        self.assertEqual(req_json.status_code, 200)
-        
-        from cmix.runner import update_builds
-        with mox_response(MockResponse("Not OK", 400)):
-            update_builds()
-        req_json = self.app.get('%s/graph' % path)
-        self.assertEqual(req_json.status_code, 200)
-
-        with mox_response(MockResponse("OK", 200)):
-            update_builds()
-        req_json = self.app.get('%s/graph' % path)
-        self.assertEqual(req_json.status_code, 200)
-
     def test_monitoring(self):
         from flask import session
         req_mon = self.app.post('/monitoring', data={'active': 'false'})

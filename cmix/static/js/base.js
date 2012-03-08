@@ -26,6 +26,9 @@ $(function() {
     window.ServerList = new (Backbone.Collection.extend({
         model: Server,
         url: '/json',
+        activeServer: function() {
+            return ServerList.find(function(e) { return e.attributes.entity_url === window.location.pathname });
+        }
     }));
 
     window.ListView = Backbone.View.extend({
@@ -48,17 +51,10 @@ $(function() {
     window.ServerDetailView = Backbone.View.extend({
         template: _.template( $('#serverdetail_template').html()),
         initialize: function() {
-            ServerList.bind('reset', this.addServer, this);
-            ServerList.bind('update', this.addServer, this);
-            ServerList.fetch();
-        },
-        addServer: function() {
-            var server_id = this.options.server_id;
-            this.server = ServerList.find(function(e) { return e.attributes._id === server_id });
             this.render();
         },
         render: function() {
-            $('#server_detail').html(this.template(this.server.toJSON()));
+            $('#server_detail').html(this.template(ServerList.activeServer().toJSON()));
             return this;
         },
         remove: function() {
@@ -70,10 +66,6 @@ $(function() {
         initialize: function() {
             ServerList.bind('add', this.addOne, this);
             ServerList.bind('reset', this.addAll, this);
-            setInterval(function() {
-                ServerList.fetch();
-            }, 10000);
-            ServerList.fetch();
         },
         addOne: function(server) {
             var view = new ListView({ model: server });
@@ -88,38 +80,27 @@ $(function() {
     /**
      * This handles the uptime charts
      **/
-    window.UptimeStatus = Backbone.Model.extend({
-        defaults: {
-            _id: '',
-            value: '',
-        },
-        initialize: function() {}
-    });
-    window.UptimeList = new (Backbone.Collection.extend({
-        model: UptimeStatus,
-        url: function() {
-            return '/server/' + window.server_id + '/graph';
-        }
-    }));
 
     window.UptimeGraphView = Backbone.View.extend({
         initialize: function() {
-            UptimeList.bind('reset', this.render, this);
-            UptimeList.fetch();
-            setInterval(function() {
-                UptimeList.fetch();
-            }, 60000);
+            this.render();
+            ServerList.bind('reset', this.render, this);
         },
         render: function() {
+            var activeServer = ServerList.activeServer();
             if(this.chart)
                 this.chart.clearChart();
             this.chart = new google.visualization.LineChart(document.getElementById('chart_div'));
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Day');
             data.addColumn('number', 'Ratio');
-            UptimeList.each(function(e) {
-                data.addRow([e.attributes._id, e.attributes.value]);
-            });
+            var changes = activeServer.attributes.changes;
+            for( var key in changes ) {
+                var successCount = changes[key][0];
+                var failureCount = changes[key][1];
+                var ratio = successCount / (failureCount + successCount);
+                data.addRow([key, ratio]);
+            }
             var options = {
                 title: 'Build Success Ratio'
             };
@@ -127,6 +108,9 @@ $(function() {
             return this;
         }
     });
+    setInterval(function() {
+        ServerList.fetch();
+    }, 10000);
 
 
 });
