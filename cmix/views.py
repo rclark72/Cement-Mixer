@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, abort, redirect, url_for, flash, session
+from flask import Flask, render_template, request
+from flask import abort, redirect, url_for, flash, session
 import models
 from mongokit import Connection
 from pymongo.objectid import ObjectId
@@ -53,9 +54,10 @@ def update_server(server_id):
         return "Success"
 
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
-    return render_template('update.html', server=server, graph=graph(server_id))
+    return render_template('update.html',
+                            server=server,
+                            graph=graph(server_id))
 
-    return 'Update'
 
 @app.route('/server/<server_id>/ping', methods=['POST', 'GET'])
 def ping_build(server_id):
@@ -65,7 +67,8 @@ def ping_build(server_id):
     if server['build_success']:
         return dump_server(server)
     else:
-        return abort(400) #abort(400, dump_server(server))
+        return abort(400, dump_server(server))
+
 
 @app.route('/monitoring', methods=['POST'])
 def set_monitoring():
@@ -75,6 +78,7 @@ def set_monitoring():
     else:
         session['monitoring_active'] = True
     return 'Set'
+
 
 @app.route('/server/<server_id>/trigger', methods=['POST'])
 def trigger_build(server_id):
@@ -92,11 +96,12 @@ def trigger_build(server_id):
     flash("Build successfully triggered", 'success')
     return 'Build Triggered'
 
+
 def graph(server_id):
     from bson.code import Code
     map = Code("function() {" +
                "    var current_time=-1;" +
-               "    if(this._id != '" + server_id + "') return;" + 
+               "    if(this._id != '" + server_id + "') return;" +
                "    for (var key in this.changes) {" +
                "        emit(key, {successCount: this.changes[key][0]});" +
                "        emit(key, {failureCount: this.changes[key][1]});" +
@@ -114,10 +119,11 @@ def graph(server_id):
     result = conn().buildservers.map_reduce(map, reduce, "myresults")
     return result.find()
 
+
 def dump_server(server):
     import json
     server_dump = {}
-    for k,v in server.iteritems():
+    for k, v in server.iteritems():
         if type(v) is datetime:
             server_dump[k] = v.isoformat()
         elif type(v) is ObjectId:
@@ -125,4 +131,3 @@ def dump_server(server):
         else:
             server_dump[k] = v
     return json.dumps(server_dump)
-

@@ -13,12 +13,6 @@ class MockResponse(object):
         self.msg = msg
         self.headers = {'content-type': 'text/xml; charset=utf-8'}
 
-    def read(self):
-        return self.resp_data
-
-    def getcode(self):
-        return self.code
-
 
 @contextmanager
 def mox_response(response):
@@ -52,7 +46,6 @@ class MixerTestCase(unittest.TestCase):
                                 trigger_url=self.config_trigger,
                                 status_url=self.config_status
                             ), follow_redirects=follow_redirects)
-
 
     def test_empty_db(self):
         rv = self.app.get('/')
@@ -91,11 +84,11 @@ class MixerTestCase(unittest.TestCase):
         req_add = self.add_server()
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
-        
+
         # verify path exists
         req_change = self.app.get(path)
         self.assertEqual(req_change.status_code, 200)
-        
+
         req_update = self.app.post(path, data=dict(
                                 link=self.config_link,
                                 name='%s_test' % self.config_name,
@@ -103,7 +96,7 @@ class MixerTestCase(unittest.TestCase):
                                 status_url=self.config_status
                             ), follow_redirects=True)
         self.assertEqual(req_update.status_code, 200)
-        
+
         req_index = self.app.get('/')
         assert '%s_test' % self.config_name in req_index.data
 
@@ -111,7 +104,7 @@ class MixerTestCase(unittest.TestCase):
         req_add = self.add_server()
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
-        
+
         from cmix.runner import update_builds
         with mox_response(MockResponse("Not OK", 400)):
             update_builds()
@@ -120,7 +113,7 @@ class MixerTestCase(unittest.TestCase):
         self.assertEqual(req_trigger.status_code, 400)
         req_status = self.app.get(path)
         assert 'Failure' in req_status.data
-            
+
         with mox_response(MockResponse("OK", 200)):
             update_builds()
 
@@ -128,7 +121,41 @@ class MixerTestCase(unittest.TestCase):
         self.assertEqual(req_ping.status_code, 200)
         req_status = self.app.get(path)
         assert 'Success' in req_status.data
-            
+
+        m = mox.Mox()
+
+        # raise unavailable when calling urlopen()
+        m.StubOutWithMock(urllib2, 'urlopen')
+        urllib2.urlopen(
+                mox.IgnoreArg()).AndRaise(urllib2.URLError("Unavailable")
+            )
+        m.ReplayAll()
+
+        update_builds()
+
+        req_ping = self.app.post('%s/ping' % path, data=dict())
+        self.assertEqual(req_trigger.status_code, 400)
+
+    def test_ping_reverse(self):
+        req_add = self.add_server()
+        self.assertEqual(req_add.status_code, 302)
+        path = urlparse(req_add.location).path
+
+        from cmix.runner import update_builds
+        with mox_response(MockResponse("OK", 200)):
+            update_builds()
+
+        req_ping = self.app.post('%s/ping' % path, data=dict())
+        self.assertEqual(req_ping.status_code, 200)
+        req_status = self.app.get(path)
+        assert 'Success' in req_status.data
+
+    def test_monitoring(self):
+        from flask import session
+        req_mon = self.app.post('/monitoring', data={'active': 'false'})
+        self.assertEqual(req_mon.status_code, 200)
+        req_mon = self.app.post('/monitoring', data={'active': 'true'})
+        self.assertEqual(req_mon.status_code, 200)
 
     def test_trigger(self):
         req_add = self.add_server()

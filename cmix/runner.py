@@ -6,6 +6,7 @@ from datetime import datetime
 
 sched = Scheduler()
 
+
 @sched.interval_schedule(seconds=10)
 def update_builds():
     servers = list(conn().buildservers.find())
@@ -19,15 +20,13 @@ def update_builds():
         except:
             success = False
 
-        if server.has_key('changes'):
+        if 'changes' in server:
             changes = server['changes']
-        else:
-            changes = dict()
 
         string_date = datetime.now().strftime("%Y-%m-%d")
 
         if success:
-            if changes.has_key(string_date):
+            if string_date in changes:
                 changes[string_date][0] += 1
             else:
                 changes[string_date] = [1, 0]
@@ -40,7 +39,7 @@ def update_builds():
                         }
                     })
         else:
-            if changes.has_key(string_date):
+            if string_date in changes:
                 changes[string_date][1] += 1
             else:
                 changes[string_date] = [0, 1]
