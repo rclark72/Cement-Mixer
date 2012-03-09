@@ -1,33 +1,68 @@
 {% extends "base.html" %}
+{% block head %}
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Day');
+        data.addColumn('number', 'Ratio');
+        data.addRows([
+                {% for column in graph %}
+                ['{{ column["_id"] }}', {{ column["value"] }}],
+                {% endfor %}
+        ]);
+
+        var options = {
+          title: 'Build Success Ratio'
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+    </script>
+    {% endblock %}
 {% block content %}
-<h2 href="{{ url_for('update_server', server_id=server._id.__str__()) }}" data-serverid="{{ server._id.__str__() }}"
-    class="server_link">
-    {{ server.name }}
-    {% if server.build_success %}
-        <span class="label label-success">Success</span>
-    {% else %}
-        <span class="label label-important">Failure</span>
-    {% endif %}
-</h2>
-<form method="POST">
-    <p>
-        <label for="form_name">Name</label>
-        <input type="text" id="form_name" name="name" value="{{ server.name }}" />
-    </p>
-    <p>
-        <label for="form_link">Link</label>
-        <input type="text" id="form_link" name="link" value="{{ server.link }}" />
-    </p>
-    <p>
-        <label for="form_trigger">Trigger URL</label>
-        <input type="text" id="form_trigger" name="trigger_url" value="{{ server.trigger_url }}" />
-    </p>
-    <p>
-        <label for="form_status">Status URL</label>
-        <input type="text" id="form_status" name="status_url" value="{{ server.status_url }}" />
-    </p>
-    <p>
-        <input type="submit" value="Submit" />
-    </p>
-</form>
+
+<div class="row">
+    <div class="span8">
+        <h2>Status Changes</h2>
+        <div id="chart_div"> </div>
+    </div>
+    <div class="span4">
+        <h2 href="{{ url_for('update_server', server_id=server._id.__str__()) }}" data-serverid="{{ server._id.__str__() }}"
+            class="server_link">
+            {{ server.name }}
+            {% if server.build_success %}
+                <span class="label label-success">Success</span>
+            {% else %}
+                <span class="label label-important">Failure</span>
+            {% endif %}
+        </h2>
+        <p><strong>Updated:</strong> <span data-timestampid="{{ server._id.__str__() }}">{{ server.last_run }}</span></p>
+
+        <form method="POST">
+            <p>
+                <label for="form_name">Name</label>
+                <input type="text" id="form_name" name="name" value="{{ server.name }}" />
+            </p>
+            <p>
+                <label for="form_link">Link</label>
+                <input type="text" id="form_link" name="link" value="{{ server.link }}" />
+            </p>
+            <p>
+                <label for="form_trigger">Trigger URL</label>
+                <input type="text" id="form_trigger" name="trigger_url" value="{{ server.trigger_url }}" />
+            </p>
+            <p>
+                <label for="form_status">Status URL</label>
+                <input type="text" id="form_status" name="status_url" value="{{ server.status_url }}" />
+            </p>
+            <p>
+                <input type="submit" value="Submit" class="btn" />
+            </p>
+        </form>
+    </div>
+</div>
 {% endblock %}

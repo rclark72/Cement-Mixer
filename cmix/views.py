@@ -53,19 +53,19 @@ def update_server(server_id):
         return "Success"
 
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
-    return render_template('update.html', server=server)
+    return render_template('update.html', server=server, graph=graph(server_id))
 
     return 'Update'
 
-@app.route('/server/<server_id>/ping', methods=['POST'])
+@app.route('/server/<server_id>/ping', methods=['POST', 'GET'])
 def ping_build(server_id):
     import urllib2
     server = conn().buildservers.find_one({'_id': ObjectId(server_id)})
 
     if server['build_success']:
-        return "OK"
+        return dump_server(server)
     else:
-        return abort(400)
+        return abort(400) #abort(400, dump_server(server))
 
 @app.route('/monitoring', methods=['POST'])
 def set_monitoring():
@@ -91,4 +91,38 @@ def trigger_build(server_id):
 
     flash("Build successfully triggered", 'success')
     return 'Build Triggered'
+
+def graph(server_id):
+    from bson.code import Code
+    map = Code("function() {" +
+               "    var current_time=-1;" +
+               "    if(this._id != '" + server_id + "') return;" + 
+               "    for (var key in this.changes) {" +
+               "        emit(key, {successCount: this.changes[key][0]});" +
+               "        emit(key, {failureCount: this.changes[key][1]});" +
+               "    };" +
+               "}")
+    reduce = Code("function(key, values) {" +
+                  "    var successSum = 0;" +
+                  "    var failureSum = 0;" +
+                  "    values.forEach(function(f) {" +
+                  "        if (f.successCount) successSum += f.successCount;" +
+                  "        if (f.failureCount) failureSum += f.failureCount;" +
+                  "    });" +
+                  "    return successSum/(successSum + failureSum);" +
+                  "};")
+    result = conn().buildservers.map_reduce(map, reduce, "myresults")
+    return result.find()
+
+def dump_server(server):
+    import json
+    server_dump = {}
+    for k,v in server.iteritems():
+        if type(v) is datetime:
+            server_dump[k] = v.isoformat()
+        elif type(v) is ObjectId:
+            server_dump[k] = str(v)
+        else:
+            server_dump[k] = v
+    return json.dumps(server_dump)
 

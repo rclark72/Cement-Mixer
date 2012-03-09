@@ -20,7 +20,8 @@ class BuildServer(Document):
         'trigger_url': unicode,
         'status_url': unicode,
         'build_success': bool,
-        'last_run': datetime.datetime,
+        'last_run': int,
+        'changes': dict,
     }
     validators = {
         'name': max_length(50)

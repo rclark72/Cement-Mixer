@@ -11,11 +11,14 @@
                     {% else %}
                         <span class="label label-important status-{{ server._id.__str__() }}">Failure</span>
                     {% endif %}
-                    <!-- last_update: {{ server.last_run }} -->
                 </div>
                 <div class="span7">
                     <a href="{{ url_for('update_server', server_id=server._id.__str__()) }}" class="server_link"
                         data-serverid="{{ server._id.__str__() }}">{{server.name }}</a>
+                    {% if server.last_run %}
+                    <p class="pull-right"><strong>Updated:</strong> <span data-timestampid="{{ server._id.__str__() }}">{{ server.last_run
+                        }}</span></p>
+                    {% endif %}
                 </div>
                 <div class="span4">
                     <div class="btn-group pull-right">

@@ -112,23 +112,22 @@ class MixerTestCase(unittest.TestCase):
         self.assertEqual(req_add.status_code, 302)
         path = urlparse(req_add.location).path
         
+        from cmix.runner import update_builds
         with mox_response(MockResponse("Not OK", 400)):
-            from cmix.runner import update_builds
             update_builds()
 
-            req_trigger = self.app.post('%s/ping' % path, data=dict())
-            self.assertEqual(req_trigger.status_code, 400)
-            req_status = self.app.get(path)
-            assert 'Failure' in req_status.data
+        req_trigger = self.app.post('%s/ping' % path, data=dict())
+        self.assertEqual(req_trigger.status_code, 400)
+        req_status = self.app.get(path)
+        assert 'Failure' in req_status.data
             
-        with mox_response(MockResponse("OK")):
-            from cmix.runner import update_builds
+        with mox_response(MockResponse("OK", 200)):
             update_builds()
 
-            req_trigger = self.app.post('%s/ping' % path, data=dict())
-            self.assertEqual(req_trigger.status_code, 200)
-            req_status = self.app.get(path)
-            assert 'Success' in req_status.data
+        req_ping = self.app.post('%s/ping' % path, data=dict())
+        self.assertEqual(req_ping.status_code, 200)
+        req_status = self.app.get(path)
+        assert 'Success' in req_status.data
             
 
     def test_trigger(self):

@@ -1,32 +1,22 @@
 var monitoring_active = false;
 
-function pingUrl(href, callback) {
+function pingUrl(href) {
     if (monitoring_active == false) {
         return;
     }
-    $.ajax({
-        url: href,
-        type: 'POST',
-        success: function(result) {
-            callback(true);
-        },
-        error: function(results) {
-            callback(false);
-        }
-    });
-    setTimeout(function() { pingUrl(href, callback) }, 10000);
-}
-
-function updateField(id) {
-    return function(status) {
-        if(status) {
+    $.getJSON(href, function(data) {
+        var id = data['_id'];
+        if(data['build_success'] === true) {
+            $('span[data-timestampid="' + id + '"]').html(data['last_run']);
             $('.status-' + id).removeClass('label-important').addClass('label-success');
             $('.status-' + id).html('Success');
         } else {
+            $('span[data-timestampid="' + id + '"]').html(data['last_run']);
             $('.status-' + id).removeClass('label-success').addClass('label-important');
             $('.status-' + id).html('Failure');
         }
-    };
+    });
+    setTimeout(function() { pingUrl(href) }, 10000);
 }
 
 function startMonitoring() {
@@ -34,7 +24,7 @@ function startMonitoring() {
     for(var x = 0; x < links.length; x++) {
         link = links[x];
         var id = $(link).attr('data-serverid');
-        pingUrl($(link).attr('href') + '/ping', updateField(id));
+        pingUrl($(link).attr('href') + '/ping');
     }
 }
 

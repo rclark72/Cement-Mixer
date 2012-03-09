@@ -3,34 +3,52 @@ import time
 import urllib2
 from views import conn
 from datetime import datetime
-import logging
-logging.basicConfig(filename='scheduler.log',level=logging.DEBUG)
 
 sched = Scheduler()
+
 @sched.interval_schedule(seconds=10)
 def update_builds():
     servers = list(conn().buildservers.find())
     for server in servers:
         req = urllib2.Request(server['status_url'])
+        success = True
         try:
             response = urllib2.urlopen(req)
-        except urllib2.URLError:
+            if(response.code != 200):
+                success = False
+        except:
+            success = False
+
+        if server.has_key('changes'):
+            changes = server['changes']
+        else:
+            changes = dict()
+
+        string_date = datetime.now().strftime("%Y-%m-%d")
+
+        if success:
+            if changes.has_key(string_date):
+                changes[string_date][0] += 1
+            else:
+                changes[string_date] = [1, 0]
+
+            conn().buildservers.update({'_id': server['_id']},
+                    {'$set': {
+                        'build_success': True,
+                        'last_run': datetime.now(),
+                        'changes': changes,
+                        }
+                    })
+        else:
+            if changes.has_key(string_date):
+                changes[string_date][1] += 1
+            else:
+                changes[string_date] = [0, 1]
+
             conn().buildservers.update({'_id': server['_id']},
                     {'$set': {
                         'build_success': False,
-                        'last_run': datetime.now()}
+                        'last_run': datetime.now(),
+                        'changes': changes,
+                        }
                     })
-        else:
-            if(response.code == 200):
-                conn().buildservers.update({'_id': server['_id']},
-                        {'$set': {
-                            'build_success': True,
-                            'last_run': datetime.now()}
-                        })
-            else:
-                conn().buildservers.update({'_id': server['_id']},
-                        {'$set': {
-                            'build_success': False,
-                            'last_run': datetime.now()}
-                        })
-
