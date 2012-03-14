@@ -21,6 +21,15 @@ $(function() {
                 alert( error );
             });
         },
+        remove: function() {
+            $.ajax({
+                url: this.attributes.entity_url,
+                type: 'DELETE',
+                success: function(result) {
+                    window.ServerList.remove(this);
+                }
+            });
+        },
     });
 
     window.ServerList = new (Backbone.Collection.extend({
@@ -28,7 +37,12 @@ $(function() {
         url: '/json',
         activeServer: function() {
             return ServerList.find(function(e) { return e.attributes.entity_url === window.location.pathname });
-        }
+        },
+        initialize: function() {
+            this.removeServer = function(_id) {
+                return ServerList.find(function(e) { return e.attributes._id === _id }).remove();
+            };
+        },
     }));
 
     window.ListView = Backbone.View.extend({

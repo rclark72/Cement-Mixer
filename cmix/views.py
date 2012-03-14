@@ -43,7 +43,10 @@ def add_server():
     server['status_url'] = request.form['status_url']
     server.save()
     update_url = url_for('update_server', server_id=str(server['_id']))
-    server.update({'entity_url': update_url})
+    conn().buildservers.update({'_id': server['_id']}, {'entity_url': update_url})
+    print update_url
+
+    print server['entity_url']
     return redirect(update_url)
 
 

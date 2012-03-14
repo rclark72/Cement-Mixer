@@ -12,6 +12,7 @@ class BuildServer(Document):
         'name': unicode,
         'trigger_url': unicode,
         'status_url': unicode,
+        'entity_url': unicode,
         'build_success': bool,
         'last_run': int,
         'changes': dict,

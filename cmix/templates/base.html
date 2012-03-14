@@ -148,7 +148,8 @@
                 <div class="btn-group pull-right">
                     <a href="<%= link %>" class="btn"><span class="icon-home"></span> Visit Server</a>
                     <button href="<%= entity_url %>/trigger" class="btn action-trigger"><span class="icon-refresh"></span> Trigger Build</button>
-                    <button href="<%= entity_url %>" class="btn btn-danger action-delete"><span class="icon-trash"></span> Delete</button>
+                    <button href="<%= entity_url %>" class="btn btn-danger"
+                        onclick="ServerList.removeServer('<%= _id %>');"><span class="icon-trash"></span> Delete</button>
                 </div>
             </div>
         </div>
