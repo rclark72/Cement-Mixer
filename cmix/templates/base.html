@@ -1,8 +1,8 @@
 {% macro nav_link(endpoint, name) %}
     {%- if url_for(endpoint) == request.script_root + request.path -%} 
-        <li class="active"><a href="{{ url_for(endpoint) }}">{{ name }}</a></li>
+        <li class="active"><a href="#{{ url_for(endpoint) }}">{{ name }}</a></li>
     {%- else -%} 
-        <li><a href="{{ url_for(endpoint) }}">{{ name }}</a></li>
+        <li><a href="#{{ url_for(endpoint) }}">{{ name }}</a></li>
     {%- endif -%} 
 {% endmacro %} 
 <!DOCTYPE html>
@@ -58,9 +58,9 @@
           </a>
           <a class="brand" href="/">Cement Mixer</a>
           <div class="nav-collapse">
-                <ul class="nav">
-                    {{ nav_link('index', 'Servers') }}
-                    {{ nav_link('add_server', 'Add Server') }}
+              <ul class="nav">
+                  <li><a href="/#">Servers</a></li>
+                  <li><a href="#server/add">Add Server</a></li>
                 </ul>
                 <ul class="nav pull-right">
                     <li>
@@ -86,17 +86,42 @@
                 </div>
             {% endfor %}
             {% endwith %}
-        {% block content %}{% endblock %}
+            <div id="chart_div" class="placeholder"></div>
+        <div id="content" class="placeholder"></div>
     </div> <!-- /container -->
 
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    
+    <script type="text/template" id="servernew_template">
+        <div class="span4">
+            <form method="POST" action="/server">
+                <p>
+                    <label for="form_name">Name</label>
+                    <input type="text" id="form_name" name="name" />
+                </p>
+                <p>
+                    <label for="form_link">Link</label>
+                    <input type="text" id="form_link" name="link" />
+                </p>
+                <p>
+                    <label for="form_trigger">Trigger URL</label>
+                    <input type="text" id="form_trigger" name="trigger_url" />
+                </p>
+                <p>
+                    <label for="form_status">Status URL</label>
+                    <input type="text" id="form_status" name="status_url" />
+                </p>
+                <p>
+                    <input type="submit" value="Submit" class="btn" />
+                </p>
+            </form>
+        </div>
+    </script>
 
     <script type="text/template" id="serverdetail_template">
         <div class="span4">
-            <h2 href="<%= entity_url %>" class="server_link">
+            <h2 class="server_link">
                 <%= name %>
                 <% if (build_success) { %>
                     <span class="label label-success">Success</span>
@@ -141,14 +166,14 @@
 
             </div>
             <div class="span7">
-                <a class="server_link" href="<%= entity_url %>"><%= name %></a>
+                <a class="server_link" href="/#server/<%= _id %>"><%= name %></a>
                 <p class="pull-right"><strong>Updated:</strong> <span class="server_timestamp"><%= last_run %></span></p>
             </div>
             <div class="span4">
                 <div class="btn-group pull-right">
                     <a href="<%= link %>" class="btn"><span class="icon-home"></span> Visit Server</a>
                     <button href="<%= entity_url %>/trigger" class="btn action-trigger"><span class="icon-refresh"></span> Trigger Build</button>
-                    <button href="<%= entity_url %>" class="btn btn-danger"
+                    <button class="btn btn-danger"
                         onclick="ServerList.removeServer('<%= _id %>');"><span class="icon-trash"></span> Delete</button>
                 </div>
             </div>

@@ -1,14 +1,4 @@
 {% extends "base.html" %}
-{% block head %}
-    <script>
-        $(function() {
-            var index_view = new IndexView();
-            ServerList.reset({{ servers_json|safe }});
-        });
-    </script>
-{% endblock %}
 {% block content %}
-<div id="index_content">
     No build servers
-</div>
 {% endblock %}

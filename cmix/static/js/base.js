@@ -23,10 +23,10 @@ $(function() {
         },
         remove: function() {
             $.ajax({
-                url: this.attributes.entity_url,
+                url: app_router.serverRoute(this.attributes._id),
                 type: 'DELETE',
-                success: function(result) {
-                    window.ServerList.remove(this);
+                complete: function() {
+                    ServerList.fetch();
                 }
             });
         },
@@ -35,9 +35,6 @@ $(function() {
     window.ServerList = new (Backbone.Collection.extend({
         model: Server,
         url: '/json',
-        activeServer: function() {
-            return ServerList.find(function(e) { return e.attributes.entity_url === window.location.pathname });
-        },
         initialize: function() {
             this.removeServer = function(_id) {
                 return ServerList.find(function(e) { return e.attributes._id === _id }).remove();
@@ -64,11 +61,19 @@ $(function() {
 
     window.ServerDetailView = Backbone.View.extend({
         template: _.template( $('#serverdetail_template').html()),
+        new_template: _.template( $('#servernew_template').html()),
         initialize: function() {
-            this.render();
+            ServerList.fetch();
+            ServerList.bind('reset', this.render, this);
         },
         render: function() {
-            $('#server_detail').html(this.template(ServerList.activeServer().toJSON()));
+            var serverId = this.options.activeServer;
+            var activeServer = ServerList.find(function(x){return x.attributes._id === serverId});
+            if(activeServer) {
+                $('#content').html(this.template(activeServer.toJSON()));
+            } else {
+                $('#content').html(this.new_template());
+            }
             return this;
         },
         remove: function() {
@@ -78,15 +83,16 @@ $(function() {
     });
     window.IndexView = Backbone.View.extend({
         initialize: function() {
+            ServerList.fetch();
             ServerList.bind('add', this.addOne, this);
             ServerList.bind('reset', this.addAll, this);
         },
         addOne: function(server) {
             var view = new ListView({ model: server });
-            $('#index_content').append(view.render().el);
+            $('#content').append(view.render().el);
         },
         addAll: function() {
-            $('#index_content').empty();
+            $('#content').empty();
             ServerList.each(this.addOne);
         }
     });
@@ -97,11 +103,12 @@ $(function() {
 
     window.UptimeGraphView = Backbone.View.extend({
         initialize: function() {
-            this.render();
             ServerList.bind('reset', this.render, this);
         },
         render: function() {
-            var activeServer = ServerList.activeServer();
+            var serverId = this.options.activeServer;
+            var activeServer = ServerList.find(function(x){return x.attributes._id === serverId});
+            console.log(serverId);
             if(this.chart)
                 this.chart.clearChart();
             this.chart = new google.visualization.LineChart(document.getElementById('chart_div'));
@@ -122,11 +129,46 @@ $(function() {
             return this;
         }
     });
-    setInterval(function() {
-        ServerList.fetch();
-    }, 10000);
+    //setInterval(function() {
+    //    ServerList.fetch();
+    //}, 10000);
 
-
+    var AppRouter = Backbone.Router.extend({
+        initialize: function() {
+            this.route(/^\/?#?$/, 'index', this.index);
+        },
+        routes: {
+            "server/add": "add_server",
+            "server/:_id": "server", // matches http://example.com/#anything-here
+        },
+        add_server: function() {
+            $('.placeholder').html('');
+            var detail_view = new ServerDetailView({
+                el: $('#content'),
+            });
+        },
+        index: function() {
+            $('.placeholder').html('');
+            var index_view = new IndexView({
+                el: $('#content'),
+            });
+        },
+        server: function( _id ){
+            $('.placeholder').html('');
+            var detail_view = new ServerDetailView({
+                el: $('#content'),
+                activeServer: _id,
+            });
+            var uptime_graph = new UptimeGraphView({
+                activeServer: _id,
+            });
+        },
+        serverRoute: function( _id ){
+            return "/server/" + _id;
+        }
+    });
+    var app_router = new AppRouter;
+    Backbone.history.start();
 });
 $(document).ready(function() {
     $('.action-delete').click(function(e) {
