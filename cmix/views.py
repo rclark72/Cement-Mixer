@@ -42,12 +42,7 @@ def add_server():
     server['trigger_url'] = request.form['trigger_url']
     server['status_url'] = request.form['status_url']
     server.save()
-    update_url = url_for('update_server', server_id=str(server['_id']))
-    conn().buildservers.update({'_id': server['_id']}, {'entity_url': update_url})
-    print update_url
-
-    print server['entity_url']
-    return redirect(update_url)
+    return json.dumps(server, cls=MongoEncoder)
 
 
 @app.route('/server/<server_id>', methods=['POST', 'GET', 'DELETE'])
@@ -75,14 +70,15 @@ def update_server(server_id):
                             servers_json=index_json(),)
 
 
-@app.route('/monitoring', methods=['POST'])
+@app.route('/monitoring', methods=['POST', 'GET'])
 def set_monitoring():
-    active = request.form['active']
-    if active == 'false':
-        session['monitoring_active'] = False
-    else:
-        session['monitoring_active'] = True
-    return 'Set'
+    if request.method == 'POST':
+        active = request.form['active']
+        if active == 'false':
+            session['monitoring_active'] = False
+        else:
+            session['monitoring_active'] = True
+    return str(session['monitoring_active'])
 
 
 @app.route('/server/<server_id>/trigger', methods=['POST'])

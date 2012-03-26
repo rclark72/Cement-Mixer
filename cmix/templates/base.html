@@ -85,8 +85,7 @@
                     {{ message }}
                 </div>
             {% endfor %}
-            {% endwith %}
-            <div id="chart_div" class="placeholder"></div>
+        {% endwith %}
         <div id="content" class="placeholder"></div>
     </div> <!-- /container -->
 
@@ -95,7 +94,7 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script type="text/template" id="servernew_template">
         <div class="span4">
-            <form method="POST" action="/server">
+            <form method="POST" action="/server" id="newServer">
                 <p>
                     <label for="form_name">Name</label>
                     <input type="text" id="form_name" name="name" />
@@ -120,6 +119,7 @@
     </script>
 
     <script type="text/template" id="serverdetail_template">
+        <div id="chart_div"></div>
         <div class="span4">
             <h2 class="server_link">
                 <%= name %>
@@ -156,7 +156,7 @@
     </script>
 
     <script type="text/template" id="serverlist_template">
-        <div class="row">
+        <div class="row" data-id="<%= _id %>">
             <div class="span1">
                 <% if (build_success) { %>
                     <span class="label label-success">Success</span>
@@ -172,9 +172,8 @@
             <div class="span4">
                 <div class="btn-group pull-right">
                     <a href="<%= link %>" class="btn"><span class="icon-home"></span> Visit Server</a>
-                    <button href="<%= entity_url %>/trigger" class="btn action-trigger"><span class="icon-refresh"></span> Trigger Build</button>
-                    <button class="btn btn-danger"
-                        onclick="ServerList.removeServer('<%= _id %>');"><span class="icon-trash"></span> Delete</button>
+                    <button class="btn action-trigger"><span class="icon-refresh"></span> Trigger Build</button>
+                    <button class="btn btn-danger action-remove"><span class="icon-trash"></span> Delete</button>
                 </div>
             </div>
         </div>
