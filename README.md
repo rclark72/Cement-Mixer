@@ -10,3 +10,4 @@ Cement Mixer is a no frills management application for micro CI servers like [CI
     cd Cement-Mixer
     pip install -r requirements.txt
     python server.py
+Test
